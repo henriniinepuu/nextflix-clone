@@ -3,9 +3,11 @@
 import axios from "axios";
 import Input from "../components/input";
 import { useCallback, useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const AuthPage = () => {
-
+    const router = useRouter();
     const [email, setEmail] = useState("");
     const [name, setName] = useState("");
     const [password, setPassword] = useState("");
@@ -16,13 +18,32 @@ const AuthPage = () => {
         setVariant((currentVariant) => currentVariant === "login" ? "register" : "login");
     }, []);
 
-    const register = useCallback(async () => {
+    const login = useCallback(async () => {
         try {
-            await axios.post("/api/register", { email, name, password });
+            await signIn("credentials", { 
+                email, 
+                password,
+                redirect: false,
+                callbackUrl: "/",
+             });
+
+             router.push("/");
         } catch (error) {
             console.log(error);
         }
-    }, [email, name, password]);
+    }, [email, password, router]);
+
+    const register = useCallback(async () => {
+        try {
+            await axios.post("/api/register", { email, name, password });
+            login();
+
+        } catch (error) {
+            console.log(error);
+        }
+    }, [email, name, password, login]);
+
+   
 
     return (
         <div className="relative h-full w-full bg-[url('/images/hero.jpg')] bg-no-repeat bg-cover bg-center bg-fixed">
@@ -65,7 +86,7 @@ const AuthPage = () => {
                                 type="password" 
                             />
                         </div>
-                        <button onClick={register} className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition font-semibold">
+                        <button onClick={variant === "register" ? register : login} className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition font-semibold">
                             {variant === "login" ? "Login" : "Register"}
                         </button>
                         <p className="text-neutral-500 mt-8 text-center">
